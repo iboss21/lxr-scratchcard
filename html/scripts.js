@@ -139,24 +139,24 @@ document.onkeyup = function (data) {
 		isscratch = false;
 		
 		// Hide UI elements
-		$('.layout').hide();
+		$('.layout', 'html').hide();
 		$('body').removeClass("active");
 		
 		// Clear canvas states to prevent visual artifacts
-		const cvs = document.getElementById('scrCanvas');
+		const scratchCanvas = document.getElementById('scrCanvas');
 		const rewardCanvas = document.getElementById('rewardCanvas');
 		
-		if (cvs && cvs.getContext) {
-			const ctx = cvs.getContext('2d');
-			if (ctx) {
-				ctx.clearRect(0, 0, cvs.width, cvs.height);
+		if (scratchCanvas && scratchCanvas.getContext) {
+			const scratchContext = scratchCanvas.getContext('2d');
+			if (scratchContext) {
+				scratchContext.clearRect(0, 0, scratchCanvas.width, scratchCanvas.height);
 			}
 		}
 		
 		if (rewardCanvas && rewardCanvas.getContext) {
-			const ctx2 = rewardCanvas.getContext('2d');
-			if (ctx2) {
-				ctx2.clearRect(0, 0, rewardCanvas.width, rewardCanvas.height);
+			const rewardContext = rewardCanvas.getContext('2d');
+			if (rewardContext) {
+				rewardContext.clearRect(0, 0, rewardCanvas.width, rewardCanvas.height);
 			}
 		}
 		
