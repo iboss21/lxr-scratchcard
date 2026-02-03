@@ -133,6 +133,17 @@ $(function () {
 	});
 });
 
+// Helper function to clear canvas
+function clearCanvas(canvasId) {
+	const canvas = document.getElementById(canvasId);
+	if (canvas && canvas.getContext) {
+		const context = canvas.getContext('2d');
+		if (context) {
+			context.clearRect(0, 0, canvas.width, canvas.height);
+		}
+	}
+}
+
 document.onkeyup = function (data) {
 	if (data.which === 27) {
 		// Reset scratch state
@@ -143,22 +154,8 @@ document.onkeyup = function (data) {
 		$('body').removeClass("active");
 		
 		// Clear canvas states to prevent visual artifacts
-		const scratchCanvas = document.getElementById('scrCanvas');
-		const rewardCanvas = document.getElementById('rewardCanvas');
-		
-		if (scratchCanvas && scratchCanvas.getContext) {
-			const scratchContext = scratchCanvas.getContext('2d');
-			if (scratchContext) {
-				scratchContext.clearRect(0, 0, scratchCanvas.width, scratchCanvas.height);
-			}
-		}
-		
-		if (rewardCanvas && rewardCanvas.getContext) {
-			const rewardContext = rewardCanvas.getContext('2d');
-			if (rewardContext) {
-				rewardContext.clearRect(0, 0, rewardCanvas.width, rewardCanvas.height);
-			}
-		}
+		clearCanvas('scrCanvas');
+		clearCanvas('rewardCanvas');
 		
 		// Notify client to close UI
 		$.post('http://lxr-scratchcard/closenui', JSON.stringify({}));
