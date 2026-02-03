@@ -135,9 +135,26 @@ $(function () {
 
 document.onkeyup = function (data) {
 	if (data.which == 27) {
+		// Reset scratch state
 		isscratch = false;
+		
+		// Hide UI elements
 		$('.layout', 'html').hide();
 		$('body').removeClass("active");
+		
+		// Clear canvas states
+		var cvs = document.getElementById('scrCanvas');
+		var rewardCanvas = document.getElementById('rewardCanvas');
+		if (cvs && cvs.getContext) {
+			var ctx = cvs.getContext('2d');
+			ctx.clearRect(0, 0, cvs.width, cvs.height);
+		}
+		if (rewardCanvas && rewardCanvas.getContext) {
+			var ctx2 = rewardCanvas.getContext('2d');
+			ctx2.clearRect(0, 0, rewardCanvas.width, rewardCanvas.height);
+		}
+		
+		// Notify client to close UI
 		$.post('http://lxr-scratchcard/closenui', JSON.stringify({}));
 		return;
 	}
