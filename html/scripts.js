@@ -133,12 +133,33 @@ $(function () {
 	});
 });
 
+// Helper function to clear canvas
+function clearCanvas(canvasId) {
+	const canvas = document.getElementById(canvasId);
+	if (canvas && canvas.getContext) {
+		const context = canvas.getContext('2d');
+		if (context) {
+			context.clearRect(0, 0, canvas.width, canvas.height);
+		}
+	}
+}
+
 document.onkeyup = function (data) {
-	if ((data.which == 27) && (isscratch == true)) {
+	// Only process ESC key when the scratch card UI is visible
+	if (data.which === 27 && $('.layout').is(':visible')) {
+		// Reset scratch state
 		isscratch = false;
-		$('.layout', 'html').hide();
+		
+		// Hide UI elements
+		$('.layout').hide();
 		$('body').removeClass("active");
-		$.post('http://qadr_scratchcard/closenui', JSON.stringify({}));
+		
+		// Clear canvas states to prevent visual artifacts
+		clearCanvas('scrCanvas');
+		clearCanvas('rewardCanvas');
+		
+		// Notify client to close UI
+		$.post('http://lxr-scratchcard/closenui', JSON.stringify({}));
 		return;
 	}
 }
