@@ -8,153 +8,226 @@
   ╚══════╝╚═╝  ╚═╝    ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ 
 ════════════════════════════════════════════════════════════════════════════════════════════════
 
-    🐺 LXR Scratchcard System - FXManifest
+    🐺 LXR Scratchcard - Client Script
     
-    Multi-framework scratchcard/lottery system with secure server-side validation,
-    comprehensive anti-abuse protection, and support for LXR-Core, RSG-Core, VORP,
-    RedEM:RP, and standalone operation.
-    
-    ════════════════════════════════════════════════════════════════════════════════════════════
-    Server:     The Land of Wolves 🐺 (Georgian RP 🇬🇪)
-    Version:    2.0.0 (Land of Wolves Edition)
-    Author:     iBoss21 / The Lux Empire
-    Website:    https://www.wolves.land
-    GitHub:     https://github.com/iBoss21/lxr-scratchcard
-    Discord:    https://discord.gg/CrKcWdfd3A
-    Store:      https://theluxempire.tebex.io
-    
-    Original:   qadr_scratchcard
-    Inspired:   flux_scratchcard by xFluXioN
+    Client-side logic for the scratchcard system. Handles UI interaction, NUI communication,
+    and player input for scratching cards. Integrates with the framework adapter for
+    cross-framework compatibility.
     
     ════════════════════════════════════════════════════════════════════════════════════════════
-    © 2026 The Lux Empire / iBoss21 - All Rights Reserved
+    Scope: Client-side UI, Player Interaction, NUI Communication
+    ════════════════════════════════════════════════════════════════════════════════════════════
+    © 2026 The Lux Empire / iBoss21 - https://www.wolves.land
     ════════════════════════════════════════════════════════════════════════════════════════════
 ]]
 
 -- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ FIVEM/REDM MANIFEST CONFIGURATION
+-- █████ CLIENT STATE MANAGEMENT
 -- ════════════════════════════════════════════════════════════════════════════════════════════
 
-fx_version 'cerulean'
-game 'rdr3'
-
--- RedM Prerelease Acknowledgement (Required for RedM resources)
-rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources WILL become incompatible once RedM ships.'
-
--- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ RESOURCE METADATA
--- ════════════════════════════════════════════════════════════════════════════════════════════
-
-name 'LXR Scratchcard System'
-author 'iBoss21 / The Lux Empire'
-description 'Multi-framework scratchcard/lottery system for RedM with secure validation and anti-abuse protection. Supports LXR-Core, RSG-Core, VORP, RedEM:RP, and standalone.'
-version '2.0.0'
-url 'https://github.com/iBoss21/lxr-scratchcard'
-
--- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ LUA VERSION
--- ════════════════════════════════════════════════════════════════════════════════════════════
-
-lua54 'yes'
-
--- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ DEPENDENCIES (OPTIONAL - RUNTIME DETECTION)
--- ════════════════════════════════════════════════════════════════════════════════════════════
-
--- Note: Dependencies are optional. The resource will auto-detect available frameworks at runtime.
--- Uncomment the framework your server uses (or leave all commented for auto-detection):
-
--- dependencies {
---     -- Primary Frameworks (Priority)
---     'lxr-core',        -- LXR-Core (wolves.land native)
---     'rsg-core',        -- RSG-Core (RedM framework)
---     
---     -- Supported Frameworks
---     'vorp_core',       -- VORP Core
---     'redemrp_core',    -- RedEM:RP
---     
---     -- Optional Frameworks
---     'qbr-core',        -- QBR-Core
---     'qr-core',         -- QR-Core
--- }
-
--- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ SHARED SCRIPTS (LOADED ON BOTH CLIENT & SERVER)
--- ════════════════════════════════════════════════════════════════════════════════════════════
-
--- Scope: Configuration, Framework Detection, Shared Utilities
-shared_scripts {
-    'config.lua',              -- Main configuration with resource name protection
-    'shared/framework.lua',    -- Framework auto-detection and adapter layer
-    'shared/utils.lua',        -- Shared utility functions
+local ClientState = {
+    isScratching = false,
+    currentPrize = 0,
+    scratchStartCoords = nil,
 }
 
 -- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ CLIENT SCRIPTS (CLIENT-SIDE ONLY)
+-- █████ FRAMEWORK READY EVENT
 -- ════════════════════════════════════════════════════════════════════════════════════════════
 
--- Scope: UI Interaction, NUI Communication, Player Input
-client_scripts {
-    'client/client.lua',       -- Main client-side logic
-}
+Citizen.CreateThread(function()
+    -- Wait for framework to be ready
+    while not Framework or not Framework.Ready do
+        Citizen.Wait(100)
+    end
+    
+    Utils.Log('Client initialized with framework: %s', Framework.Name)
+end)
 
 -- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ SERVER SCRIPTS (SERVER-SIDE ONLY)
+-- █████ CORE SCRATCHCARD FUNCTIONS
 -- ════════════════════════════════════════════════════════════════════════════════════════════
 
--- Scope: Prize Calculation, Validation, Security, Economy Integration
-server_scripts {
-    'server/server.lua',       -- Main server-side logic
-}
+-- Request to Use Scratchcard
+function UseScratchcard()
+    if ClientState.isScratching then
+        Framework.Notify(Utils.GetLocale('already_scratching'), 'error', 3000)
+        return
+    end
+    
+    -- Store player position for distance validation
+    local playerPed = PlayerPedId()
+    ClientState.scratchStartCoords = GetEntityCoords(playerPed)
+    
+    -- Trigger server-side validation and prize calculation
+    TriggerServerEvent('lxr-scratchcard:server:useCard')
+    
+    Utils.Debug('Scratchcard use requested')
+end
+
+-- Display Scratchcard UI
+function ShowScratchcardUI(prize)
+    if ClientState.isScratching then
+        return
+    end
+    
+    ClientState.isScratching = true
+    ClientState.currentPrize = prize
+    
+    Wait(100)
+    
+    -- Enable NUI focus
+    SetNuiFocus(true, true)
+    
+    -- Send data to NUI
+    SendNUIMessage({
+        type = "shownui",
+        value = prize,
+        threshold = Config.General.scratchThreshold or 0.5
+    })
+    
+    -- Play animation if enabled
+    if Config.General.useAnimation then
+        PlayScratchAnimation()
+    end
+    
+    Utils.Debug('Scratchcard UI displayed with prize: $%d', prize)
+end
+
+-- Close Scratchcard UI
+function CloseScratchcardUI()
+    if not ClientState.isScratching then
+        return
+    end
+    
+    SetNuiFocus(false, false)
+    
+    -- Validate player hasn't moved too far (anti-exploit)
+    if Config.Security.validateDistance and ClientState.scratchStartCoords then
+        local playerPed = PlayerPedId()
+        local currentCoords = GetEntityCoords(playerPed)
+        local distance = #(ClientState.scratchStartCoords - currentCoords)
+        
+        if distance > Config.Security.maxDistance then
+            Utils.Debug('Player moved too far: %.2fm', distance)
+            TriggerServerEvent('lxr-scratchcard:server:invalidMovement', distance)
+        end
+    end
+    
+    -- Notify server that scratching is complete
+    TriggerServerEvent('lxr-scratchcard:server:claimPrize')
+    
+    -- Reset state
+    ClientState.isScratching = false
+    ClientState.currentPrize = 0
+    ClientState.scratchStartCoords = nil
+    
+    Utils.Debug('Scratchcard UI closed')
+end
+
+-- Play Scratch Animation
+function PlayScratchAnimation()
+    local playerPed = PlayerPedId()
+    
+    -- Load animation dictionary
+    RequestAnimDict(Config.General.animDict)
+    while not HasAnimDictLoaded(Config.General.animDict) do
+        Citizen.Wait(10)
+    end
+    
+    -- Play animation
+    TaskPlayAnim(
+        playerPed,
+        Config.General.animDict,
+        Config.General.animName,
+        8.0, -8.0, Config.General.animDuration,
+        1, 0, false, false, false
+    )
+end
 
 -- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ UI PAGE (NUI)
+-- █████ EVENT HANDLERS
 -- ════════════════════════════════════════════════════════════════════════════════════════════
 
-ui_page 'html/index.html'
+-- Legacy Event Support (for backwards compatibility)
+RegisterNetEvent("qadr_scratchcard:useCard")
+AddEventHandler("qadr_scratchcard:useCard", function()
+    UseScratchcard()
+end)
+
+RegisterNetEvent("qadr_scratchcard:kartGoster")
+AddEventHandler("qadr_scratchcard:kartGoster", function(prize)
+    ShowScratchcardUI(prize)
+end)
+
+-- Modern Event Naming (LXR Style)
+RegisterNetEvent("lxr-scratchcard:client:useCard")
+AddEventHandler("lxr-scratchcard:client:useCard", function()
+    UseScratchcard()
+end)
+
+RegisterNetEvent("lxr-scratchcard:client:showCard")
+AddEventHandler("lxr-scratchcard:client:showCard", function(prize)
+    ShowScratchcardUI(prize)
+end)
+
+RegisterNetEvent("lxr-scratchcard:client:notify")
+AddEventHandler("lxr-scratchcard:client:notify", function(message, type, duration)
+    Framework.Notify(message, type, duration)
+end)
 
 -- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ FILES (NUI RESOURCES)
+-- █████ NUI CALLBACKS
 -- ════════════════════════════════════════════════════════════════════════════════════════════
 
-files {
-    'html/index.html',         -- Main UI HTML
-    'html/scripts.js',         -- UI JavaScript logic
-    'html/styles.css',         -- UI stylesheet
-    'html/img/*.jpg',          -- Image assets (JPG)
-    'html/img/*.png',          -- Image assets (PNG)
-    'html/font/*.ttf',         -- Font assets (TrueType)
-}
+-- Close NUI Callback
+RegisterNUICallback("closenui", function(data, cb)
+    CloseScratchcardUI()
+    
+    if cb then
+        cb({status = 'ok'})
+    end
+end)
+
+-- Scratch Progress Callback (optional - for future features)
+RegisterNUICallback("scratchProgress", function(data, cb)
+    if Config.Debug.printEvents then
+        Utils.Debug('Scratch progress: %.2f%%', (data.progress or 0) * 100)
+    end
+    
+    if cb then
+        cb({status = 'ok'})
+    end
+end)
 
 -- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ ESCROW (IF APPLICABLE)
+-- █████ EXPORTS (FOR EXTERNAL ACCESS)
 -- ════════════════════════════════════════════════════════════════════════════════════════════
 
--- Escrow protection for commercial distribution (optional)
--- escrow_ignore {
---     'config.lua',
---     'shared/*.lua',
---     'docs/*.md',
--- }
+exports('UseScratchcard', UseScratchcard)
+exports('IsScratching', function()
+    return ClientState.isScratching
+end)
 
 -- ════════════════════════════════════════════════════════════════════════════════════════════
--- █████ MANIFEST END
+-- █████ DEBUG COMMANDS (DEVELOPMENT ONLY)
 -- ════════════════════════════════════════════════════════════════════════════════════════════
 
---[[
-    ╔═══════════════════════════════════════════════════════════════════════════════════╗
-    ║                                                                                   ║
-    ║   🐺 LXR SCRATCHCARD SYSTEM - MANIFEST LOADED                                    ║
-    ║                                                                                   ║
-    ║   This resource provides a secure, multi-framework scratchcard system for        ║
-    ║   RedM servers with comprehensive validation and anti-abuse protection.          ║
-    ║                                                                                   ║
-    ║   For installation and configuration instructions, see:                          ║
-    ║   • docs/installation.md                                                         ║
-    ║   • docs/configuration.md                                                        ║
-    ║                                                                                   ║
-    ║   🐺 The Land of Wolves - https://www.wolves.land                                ║
-    ║   📦 GitHub - https://github.com/iBoss21/lxr-scratchcard                        ║
-    ║                                                                                   ║
-    ╚═══════════════════════════════════════════════════════════════════════════════════╝
-]]
+if Config.Debug.enabled then
+    RegisterCommand('testcard', function()
+        ShowScratchcardUI(1000)
+    end, false)
+    
+    RegisterCommand('closecard', function()
+        CloseScratchcardUI()
+    end, false)
+end
+
+-- ════════════════════════════════════════════════════════════════════════════════════════════
+-- █████ CLIENT INITIALIZATION COMPLETE
+-- ════════════════════════════════════════════════════════════════════════════════════════════
+
+Citizen.CreateThread(function()
+    Wait(1000)
+    Utils.Log('Client-side scratchcard system initialized')
+end)
