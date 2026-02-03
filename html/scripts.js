@@ -134,11 +134,11 @@ $(function () {
 });
 
 document.onkeyup = function (data) {
-	if ((data.which == 27) && (isscratch == true)) {
+	if (data.which == 27) {
 		isscratch = false;
 		$('.layout', 'html').hide();
 		$('body').removeClass("active");
-		$.post('http://qadr_scratchcard/closenui', JSON.stringify({}));
+		$.post('http://lxr-scratchcard/closenui', JSON.stringify({}));
 		return;
 	}
 }
