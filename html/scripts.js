@@ -145,7 +145,8 @@ function clearCanvas(canvasId) {
 }
 
 document.onkeyup = function (data) {
-	if (data.which === 27) {
+	// Only process ESC key when the scratch card UI is visible
+	if (data.which === 27 && $('.layout').is(':visible')) {
 		// Reset scratch state
 		isscratch = false;
 		
