@@ -134,12 +134,12 @@ $(function () {
 });
 
 document.onkeyup = function (data) {
-	if (data.which == 27) {
+	if (data.which === 27) {
 		// Reset scratch state
 		isscratch = false;
 		
 		// Hide UI elements
-		$('.layout', 'html').hide();
+		$('html .layout').hide();
 		$('body').removeClass("active");
 		
 		// Clear canvas states to prevent visual artifacts
