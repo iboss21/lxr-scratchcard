@@ -151,7 +151,7 @@ document.onkeyup = function (data) {
 		isscratch = false;
 		
 		// Hide UI elements
-		$('html .layout').hide();
+		$('.layout').hide();
 		$('body').removeClass("active");
 		
 		// Clear canvas states to prevent visual artifacts
